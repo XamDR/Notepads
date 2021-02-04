@@ -665,12 +665,18 @@
 
             try
             {
-                var dataPackageView = Windows.ApplicationModel.DataTransfer.Clipboard.GetContent();
+                var dataPackageView = Clipboard.GetContent();
                 if (!dataPackageView.Contains(StandardDataFormats.Text)) return;
                 var text = await dataPackageView.GetTextAsync();
                 Document.BeginUndoGroup();
                 Document.Selection.SetText(TextSetOptions.None, text);
-                //Document.Selection.CharacterFormat.TextScript = TextScript.Ansi;
+
+                if (Uri.TryCreate(text, UriKind.Absolute, out var webUrl) &&
+                    (webUrl.Scheme == Uri.UriSchemeHttp || webUrl.Scheme == Uri.UriSchemeHttps))
+                {
+                    Document.Selection.Link = $"\"{Document.Selection.Text}\"";
+                }
+
                 Document.Selection.StartPosition = Document.Selection.EndPosition;
                 Document.EndUndoGroup();
             }
